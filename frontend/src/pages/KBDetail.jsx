@@ -5,11 +5,11 @@ import Navbar from "../components/Navbar";
 import DocumentUpload from "../components/DocumentUpload";
 import WikiPageViewer from "../components/WikiPageViewer";
 
-const STATUS_COLOR = {
-  pending: "bg-yellow-100 text-yellow-700",
-  processing: "bg-blue-100 text-blue-700",
-  done: "bg-green-100 text-green-700",
-  failed: "bg-red-100 text-red-700",
+const STATUS = {
+  pending:    { label: "pending",    cls: "text-wm-amber bg-wm-amber/10 border-wm-amber/20" },
+  processing: { label: "processing", cls: "text-wm-blue  bg-wm-blue/10  border-wm-blue/20" },
+  done:       { label: "done",       cls: "text-wm-green bg-wm-green/10 border-wm-green/20" },
+  failed:     { label: "failed",     cls: "text-wm-red   bg-wm-red/10   border-wm-red/20"   },
 };
 
 export default function KBDetail() {
@@ -22,10 +22,7 @@ export default function KBDetail() {
   const pollRef = useRef(null);
 
   useEffect(() => {
-    client.get(`/kb`).then((res) => {
-      const found = res.data.find((k) => k.id === kbId);
-      setKb(found);
-    });
+    client.get(`/kb`).then((res) => setKb(res.data.find((k) => k.id === kbId)));
     fetchDocs();
     client.get(`/kb/${kbId}/wiki`).then((res) => setWikiPages(res.data));
     return () => clearInterval(pollRef.current);
@@ -40,8 +37,7 @@ export default function KBDetail() {
       pollRef.current = setInterval(async () => {
         const updated = await client.get(`/kb/${kbId}/documents`);
         setDocs(updated.data);
-        const stillPending = updated.data.some((d) => d.status === "pending" || d.status === "processing");
-        if (!stillPending) {
+        if (!updated.data.some((d) => d.status === "pending" || d.status === "processing")) {
           clearInterval(pollRef.current);
           client.get(`/kb/${kbId}/wiki`).then((r) => setWikiPages(r.data));
         }
@@ -55,8 +51,7 @@ export default function KBDetail() {
       pollRef.current = setInterval(async () => {
         const updated = await client.get(`/kb/${kbId}/documents`);
         setDocs(updated.data);
-        const stillPending = updated.data.some((d) => d.status === "pending" || d.status === "processing");
-        if (!stillPending) {
+        if (!updated.data.some((d) => d.status === "pending" || d.status === "processing")) {
           clearInterval(pollRef.current);
           pollRef.current = null;
           client.get(`/kb/${kbId}/wiki`).then((r) => setWikiPages(r.data));
@@ -71,65 +66,99 @@ export default function KBDetail() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <Navbar />
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        <Link to="/" className="text-sm text-indigo-600 hover:underline mb-4 block">
-          &larr; Back to Dashboard
-        </Link>
-        <h1 className="text-2xl font-bold text-gray-800 mb-6">{kb?.name || "Loading..."}</h1>
+      <div className="max-w-4xl mx-auto px-6 py-10 animate-fade-in">
 
-        <div className="flex gap-4 border-b mb-6">
+        {/* Breadcrumb */}
+        <Link to="/" className="text-xs font-mono text-wm-text2 hover:text-wm-accent transition-colors mb-6 block">
+          ← knowledge bases
+        </Link>
+
+        {/* Header */}
+        <div className="mb-8">
+          <p className="wm-label mb-2">Knowledge Base</p>
+          <h1 className="font-display text-3xl font-light text-wm-text1">
+            {kb?.name || <span className="animate-pulse text-wm-text3">Loading…</span>}
+          </h1>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-0 border-b border-wm-border mb-6">
           {["documents", "wiki"].map((t) => (
             <button
               key={t}
               onClick={() => { setTab(t); setSelectedWiki(null); }}
-              className={`pb-2 text-sm font-medium capitalize border-b-2 -mb-px ${
-                tab === t ? "border-indigo-600 text-indigo-600" : "border-transparent text-gray-500 hover:text-gray-700"
+              className={`px-4 py-2.5 text-sm font-medium capitalize transition-all duration-150 border-b-2 -mb-px ${
+                tab === t
+                  ? "border-wm-accent text-wm-accent"
+                  : "border-transparent text-wm-text2 hover:text-wm-text1"
               }`}
             >
               {t}
+              {t === "documents" && docs.length > 0 && (
+                <span className="ml-2 text-xs font-mono text-wm-text3">{docs.length}</span>
+              )}
+              {t === "wiki" && wikiPages.length > 0 && (
+                <span className="ml-2 text-xs font-mono text-wm-text3">{wikiPages.length}</span>
+              )}
             </button>
           ))}
         </div>
 
+        {/* Documents tab */}
         {tab === "documents" && (
-          <div>
-            <div className="mb-4">
+          <div className="animate-fade-in">
+            <div className="mb-6">
               <DocumentUpload kbId={kbId} onUploaded={handleUploaded} />
             </div>
             {docs.length === 0 ? (
-              <p className="text-gray-500 text-sm">No documents yet.</p>
+              <div className="wm-card p-10 text-center">
+                <p className="text-wm-text2 text-sm">No documents yet — upload one to get started</p>
+              </div>
             ) : (
               <div className="space-y-2">
-                {docs.map((doc) => (
-                  <div key={doc.id} className="bg-white rounded-lg border px-4 py-3 flex items-center justify-between">
-                    <span className="text-sm text-gray-700">{doc.filename}</span>
-                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${STATUS_COLOR[doc.status] || ""}`}>
-                      {doc.status}
-                    </span>
-                  </div>
-                ))}
+                {docs.map((doc) => {
+                  const s = STATUS[doc.status] || STATUS.pending;
+                  return (
+                    <div key={doc.id} className="wm-card px-4 py-3 flex items-center justify-between">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="text-xs font-mono text-wm-text3 uppercase">
+                          {doc.file_type}
+                        </span>
+                        <span className="text-sm text-wm-text1 truncate">{doc.filename}</span>
+                      </div>
+                      <span className={`shrink-0 text-xs font-mono px-2.5 py-1 rounded-full border ${s.cls}`}>
+                        {s.label}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
         )}
 
+        {/* Wiki list */}
         {tab === "wiki" && !selectedWiki && (
-          <div>
+          <div className="animate-fade-in">
             {wikiPages.length === 0 ? (
-              <p className="text-gray-500 text-sm">No wiki pages yet. Upload a document to generate one.</p>
+              <div className="wm-card p-10 text-center">
+                <p className="text-wm-text2 text-sm">No wiki pages yet — upload a document to auto-generate one</p>
+              </div>
             ) : (
               <div className="space-y-2">
                 {wikiPages.map((page) => (
                   <button
                     key={page.id}
                     onClick={() => loadWikiPage(page.id)}
-                    className="w-full text-left bg-white rounded-lg border px-4 py-3 hover:border-indigo-300 transition"
+                    className="w-full text-left wm-card-hover px-5 py-4 group"
                   >
-                    <p className="font-medium text-gray-800">{page.title}</p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      Updated {new Date(page.updated_at).toLocaleDateString()}
+                    <p className="font-display text-base font-light text-wm-text1 group-hover:text-wm-accent transition-colors">
+                      {page.title}
+                    </p>
+                    <p className="text-xs font-mono text-wm-text3 mt-1">
+                      updated {new Date(page.updated_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                     </p>
                   </button>
                 ))}
@@ -138,15 +167,18 @@ export default function KBDetail() {
           </div>
         )}
 
+        {/* Wiki viewer */}
         {tab === "wiki" && selectedWiki && (
-          <div>
+          <div className="animate-fade-in">
             <button
               onClick={() => setSelectedWiki(null)}
-              className="text-sm text-indigo-600 hover:underline mb-4 block"
+              className="text-xs font-mono text-wm-text2 hover:text-wm-accent transition-colors mb-6 block"
             >
-              &larr; Back to wiki list
+              ← back to wiki list
             </button>
-            <WikiPageViewer content={selectedWiki.content_md} />
+            <div className="wm-card p-8">
+              <WikiPageViewer content={selectedWiki.content_md} />
+            </div>
           </div>
         )}
       </div>

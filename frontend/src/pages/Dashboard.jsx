@@ -29,56 +29,85 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <Navbar />
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">Knowledge Bases</h1>
+      <div className="max-w-5xl mx-auto px-6 py-10 animate-fade-in">
+
+        {/* Header */}
+        <div className="flex items-end justify-between mb-8">
+          <div>
+            <p className="wm-label mb-2">Your workspace</p>
+            <h1 className="font-display text-3xl font-light text-wm-text1">Knowledge Bases</h1>
+          </div>
           <button
             onClick={() => setShowForm(!showForm)}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-sm"
+            className={showForm ? "wm-btn-ghost" : "wm-btn-primary"}
           >
-            + New KB
+            {showForm ? "Cancel" : "+ New Base"}
           </button>
         </div>
 
+        {/* Create form */}
         {showForm && (
-          <form onSubmit={createKB} className="bg-white rounded-xl border p-5 mb-6 space-y-3">
+          <form
+            onSubmit={createKB}
+            className="wm-card p-5 mb-6 space-y-4 animate-slide-up border-wm-accent/30"
+          >
+            <p className="wm-label">New knowledge base</p>
             <input
               type="text"
-              placeholder="Name"
-              className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="Name your knowledge base…"
+              className="wm-input"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               required
+              autoFocus
             />
             <input
               type="text"
-              placeholder="Description (optional)"
-              className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="Short description (optional)"
+              className="wm-input"
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
             />
-            <div className="flex gap-2">
-              <button type="submit" className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700">
-                Create
-              </button>
-              <button type="button" onClick={() => setShowForm(false)} className="text-sm text-gray-500 hover:text-gray-700 px-4 py-2">
-                Cancel
-              </button>
+            <div className="flex gap-2 pt-1">
+              <button type="submit" className="wm-btn-primary">Create</button>
+              <button type="button" onClick={() => setShowForm(false)} className="wm-btn-ghost">Cancel</button>
             </div>
           </form>
         )}
 
+        {/* Content */}
         {loading ? (
-          <p className="text-gray-500">Loading...</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="wm-card p-5 h-32 animate-pulse" />
+            ))}
+          </div>
         ) : kbs.length === 0 ? (
-          <p className="text-gray-500">No knowledge bases yet. Create one to get started.</p>
+          <div className="wm-card p-12 text-center">
+            <div className="w-12 h-12 rounded-full bg-wm-surface2 border border-wm-border flex items-center justify-center mx-auto mb-4">
+              <span className="text-wm-accent text-xl font-display italic">W</span>
+            </div>
+            <p className="text-wm-text1 font-display text-lg font-light mb-1">No knowledge bases yet</p>
+            <p className="text-wm-text2 text-sm mb-6">Create your first base and start uploading documents</p>
+            <button onClick={() => setShowForm(true)} className="wm-btn-primary">
+              Create your first base
+            </button>
+          </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {kbs.map((kb) => (
               <KBCard key={kb.id} kb={kb} onUpdate={handleUpdate} />
             ))}
+          </div>
+        )}
+
+        {/* Stats bar */}
+        {kbs.length > 0 && (
+          <div className="mt-8 flex gap-6 text-xs font-mono text-wm-text3">
+            <span>{kbs.length} base{kbs.length !== 1 ? "s" : ""}</span>
+            <span>{kbs.filter((k) => k.is_active).length} active</span>
           </div>
         )}
       </div>

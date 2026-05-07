@@ -27,11 +27,23 @@ export default function DocumentUpload({ kbId, onUploaded }) {
 
   return (
     <div>
-      <label className="cursor-pointer bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700 inline-block">
-        {uploading ? "Uploading..." : "Upload Document"}
-        <input type="file" accept=".pdf,.docx,.txt" className="hidden" onChange={handleFile} disabled={uploading} />
+      <label className={`inline-flex items-center gap-2 cursor-pointer wm-btn-primary ${uploading ? "opacity-50 cursor-not-allowed" : ""}`}>
+        <span className="text-base leading-none">{uploading ? "↑" : "+"}</span>
+        <span>{uploading ? "Uploading…" : "Upload Document"}</span>
+        <input
+          type="file"
+          accept=".pdf,.docx,.txt"
+          className="hidden"
+          onChange={handleFile}
+          disabled={uploading}
+        />
       </label>
-      {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+      <p className="text-xs font-mono text-wm-text3 mt-2">PDF · DOCX · TXT — max 20 MB</p>
+      {error && (
+        <p className="text-wm-red text-xs font-mono bg-wm-red/10 border border-wm-red/20 rounded px-3 py-2 mt-2">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

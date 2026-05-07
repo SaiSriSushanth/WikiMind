@@ -5,25 +5,46 @@ export default function Navbar() {
   const { user, signOut } = useAuth();
   const location = useLocation();
 
-  const linkClass = (path) =>
-    `text-sm font-medium ${location.pathname === path ? "text-indigo-600" : "text-gray-600 hover:text-indigo-600"}`;
+  const isActive = (path) => location.pathname === path;
 
   return (
-    <nav className="bg-white border-b px-6 py-3 flex items-center justify-between">
-      <Link to="/" className="text-xl font-bold text-indigo-600">
-        WikiMind
-      </Link>
-      <div className="flex items-center gap-6">
-        <Link to="/" className={linkClass("/")}>Dashboard</Link>
-        <Link to="/chat" className={linkClass("/chat")}>Chat</Link>
-        <Link to="/settings" className={linkClass("/settings")}>Settings</Link>
-        <div className="flex items-center gap-3 ml-4">
-          <span className="text-sm text-gray-500">{user?.email}</span>
+    <nav className="sticky top-0 z-50 bg-wm-bg/90 backdrop-blur-md border-b border-wm-border">
+      <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+        <Link to="/" className="font-display italic font-light text-xl text-wm-accent tracking-tight">
+          WikiMind
+        </Link>
+
+        <div className="flex items-center gap-1">
+          {[
+            { path: "/", label: "Bases" },
+            { path: "/chat", label: "Chat" },
+            { path: "/settings", label: "Settings" },
+          ].map(({ path, label }) => (
+            <Link
+              key={path}
+              to={path}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-150 ${
+                isActive(path)
+                  ? "text-wm-accent bg-wm-accent-dim"
+                  : "text-wm-text2 hover:text-wm-text1 hover:bg-wm-surface2"
+              }`}
+            >
+              {label}
+            </Link>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="w-7 h-7 rounded-full bg-wm-surface2 border border-wm-border flex items-center justify-center">
+            <span className="text-xs font-mono text-wm-accent">
+              {user?.email?.[0]?.toUpperCase() || "?"}
+            </span>
+          </div>
           <button
             onClick={signOut}
-            className="text-sm text-red-500 hover:text-red-700"
+            className="text-xs text-wm-text2 hover:text-wm-red transition-colors duration-150 font-mono"
           >
-            Sign out
+            sign out
           </button>
         </div>
       </div>
