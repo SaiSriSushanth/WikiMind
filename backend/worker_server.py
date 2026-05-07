@@ -16,6 +16,7 @@ def start_celery():
         sys.executable, "-m", "celery",
         "-A", "tasks.celery_app", "worker",
         "--beat", "--loglevel=info",
+        "--concurrency=1", "--pool=solo",
     ])
 
 if __name__ == "__main__":
